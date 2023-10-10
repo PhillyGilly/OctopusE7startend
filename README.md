@@ -2,6 +2,10 @@
 
 This 'how-to' explains detect and switch Octopus Economy 7 start end times in Home assistant.
 
+I had already followed @OliverShinglers video tutorial 
+
+https://youtu.be/bb5aDtn2wUA?si=1HiZRisSy4Mt7U4B
+
 
 I have two input helpers set up which are used in multiple automations, for example to run the dishwasher over-night, or to charge GivEnergy batteries over-night.
 
