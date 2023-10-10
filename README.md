@@ -8,25 +8,28 @@ I had already followed @OliverShingler 's video tutorial https://youtu.be/bb5aDt
 
 The automation for this uses two DateTime Input Helpers as shown:
 
-![image](https://github.com/PhillyGilly/OctopusE7startend/assets/56273663/17743ba3-db5a-4d38-9d67-c348f4a92521)
+![image](https://github.com/PhillyGilly/OctopusE7startend/assets/56273663/c5a97e63-87f4-4fc2-a478-5cd8b00f6bdb)
 
-Once I had these, I incoporated them into other automations, for example to run the dishwasher over-night, or more importantly to charge GivEnergy batteries over-night.
-At the end of the summer I switched tariff to Octopus Economy 7 because I needed 5hr 17min to fully charge my batteries.
+Once I had these, I incoporated them into other automations, for example to run the dishwasher over-night.
+At the end of the summer I switched tariff to Octopus Economy 7 because, in the absence of any PV generation, I needed a tariff with over 5hr 17min off-peak to fully charge my batteries.
 
 I use the Hildebrand-Glow IHD with Local MQTT and a few days later I noticed that the new tariff details were being shown in it.
 
-![2023-10-10 07 33 31](https://github.com/PhillyGilly/OctopusE7startend/assets/56273663/6a30d88a-f055-41c7-9755-957b54bb6a39)
+![newtariff](https://github.com/PhillyGilly/OctopusE7startend/assets/56273663/135d0d9e-f234-4cfe-ae3b-6c190466a159)
 
 The availability of this information in a dispaly made me wonder if the actual tariffs and their timing were availble via local MQTT. They aren't.
 I have a preference for using local integrations with Home Assistant, however for something which is not going to change often I am willing to use cloud integrations.
 
 @BottlecapDave 's Home Assistant-Octopus Energy integration https://github.com/BottlecapDave/HomeAssistant-OctopusEnergy provides for a live feed from Octopus.
 To use this you need an API-key which is found under Developer Options on the Personal Details page of your Octopus Account viewed on a PC.
-When installed this creates seven new sensors and the one which shows the change from Off-peak to Peak is the fifth one down.
 
-![image](https://github.com/PhillyGilly/OctopusE7startend/assets/56273663/1ae069d9-b430-4803-a21c-3ba908dd30e7)
- 
-Note that the start- and end-times shown here during British Summer Time are not the same as the IHD values.
+![octopus api](https://github.com/PhillyGilly/OctopusE7startend/assets/56273663/b4c5eaee-3922-4a69-a105-5f1fd9c3e8bf)
+
+When installed this creates a new electricity meter device with seven new sensors and the one which shows the status of Electricity Off Peak (turned on or turned off) the fourth one down.
+
+![new device](https://github.com/PhillyGilly/OctopusE7startend/assets/56273663/0bad4a64-fd36-4bf7-af91-9885dfc65067)
+
+The times that Off-peak stats and ends are shown in th eevent log. Note that these values during British Summer Time are not the same as the IHD values.
 You can decide which ones to believe, however, as Economy 7 has to work with non-smart meters too, I am inclined to think that the Off-peak is 00:30 to 07:30 GMT which is what Octopus subsequently confirmed to me in an email.
 
 After this the automation to keep the InputDate Helpers aligned to the Octopus API values is fairly straight forward:
@@ -81,3 +84,8 @@ action:
               entity_id: input_datetime.off_peak_energy_end
 mode: single
 ```
+Does it work? Here are new manually set, wrong values in the DateTime Input Helpers at 18:35 on 10th October:
+
+![image](https://github.com/PhillyGilly/OctopusE7startend/assets/56273663/bb6af8c3-a8dc-4751-abd7-376d892890d2)
+
+
