@@ -29,7 +29,7 @@ When installed this creates a new electricity meter device with seven new sensor
 
 ![new device](https://github.com/PhillyGilly/OctopusE7startend/assets/56273663/0bad4a64-fd36-4bf7-af91-9885dfc65067)
 
-The times that Off-peak stats and ends are shown in th eevent log. Note that these values during British Summer Time are not the same as the IHD values.
+The times that Off-peak stats and ends are shown in the event log. Note that these values during British Summer Time are not the same as the IHD values.
 You can decide which ones to believe, however, as Economy 7 has to work with non-smart meters too, I am inclined to think that the Off-peak is 00:30 to 07:30 GMT which is what Octopus subsequently confirmed to me in an email.
 
 After this the automation to keep the InputDate Helpers aligned to the Octopus API values is fairly straight forward:
@@ -40,7 +40,7 @@ trigger:
   - platform: state
     entity_id:
       - >-
-        binary_sensor.octopus_energy_electricity_21l4045356_1170000688431_off_peak
+        binary_sensor.octopus_energy_electricity_xxxxxx_yyyyyy_off_peak
     from: "on"
     to: "off"
     for:
@@ -51,7 +51,7 @@ trigger:
   - platform: state
     entity_id:
       - >-
-        binary_sensor.octopus_energy_electricity_21l4045356_1170000688431_off_peak
+        binary_sensor.octopus_energy_electricity_xxxxxx_yyyyyy_off_peak
     from: "off"
     to: "on"
     for:
