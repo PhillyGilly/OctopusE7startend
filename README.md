@@ -88,4 +88,7 @@ Does it work? Here are new manually set, wrong values in the DateTime Input Help
 
 ![image](https://github.com/PhillyGilly/OctopusE7startend/assets/56273663/bb6af8c3-a8dc-4751-abd7-376d892890d2)
 
+and at 08:33 on 11th October:
+
+![image](https://github.com/PhillyGilly/OctopusE7startend/assets/56273663/59085c23-470f-48c3-9806-fa07bf659272)
 
