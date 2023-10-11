@@ -84,11 +84,26 @@ action:
               entity_id: input_datetime.off_peak_energy_end
 mode: single
 ```
-Does it work? Here are new manually set, wrong values in the DateTime Input Helpers at 18:35 on 10th October:
-
-![image](https://github.com/PhillyGilly/OctopusE7startend/assets/56273663/bb6af8c3-a8dc-4751-abd7-376d892890d2)
-
-and at 08:33 on 11th October:
-
-![image](https://github.com/PhillyGilly/OctopusE7startend/assets/56273663/59085c23-470f-48c3-9806-fa07bf659272)
-
+The new input_datetime values can be used to trigger automations and specifically to set the charging slot start and end times in GivTCP  as:
+```
+  - service: select.select_option
+    target:
+      entity_id: select.givtcp_ed2248g390_charge_start_time_slot_1
+    data:
+      option: >-
+        {%if state_attr('input_datetime.off_peak_energy_start','hour') < 10 %}
+          {{ "0" + (state_attr('input_datetime.off_peak_energy_start','hour')|string) + ":" + (state_attr('input_datetime.off_peak_energy_start','minute')|string) + ":00" }}
+        {%else%}
+          {{ (state_attr('input_datetime.off_peak_energy_start','hour')|string) + ":" + (state_attr('input_datetime.off_peak_energy_start','minute')|string) + ":00" }}
+        {%endif%}
+  - service: select.select_option
+    target:
+      entity_id: select.givtcp_ed2248g390_charge_end_time_slot_1
+    data:
+      option: >-
+        {%if state_attr('input_datetime.off_peak_energy_end','hour') < 10 %}
+          {{ "0" + (state_attr('input_datetime.off_peak_energy_end','hour')|string) + ":" + ((state_attr('input_datetime.off_peak_energy_end','minute')-2)|string) + ":00" }}
+        {%else%}
+          {{ (state_attr('input_datetime.off_peak_energy_end','hour')|string) + ":" + ((state_attr('input_datetime.off_peak_energy_end','minute')-2)|string) + ":00" }}
+       {%endif%}
+```
