@@ -91,21 +91,17 @@ The new input_datetime values can be used to trigger automations and specificall
       entity_id: select.givtcp_zzzzzz_charge_start_time_slot_1
     data:
       option: >-
-        {%if state_attr('input_datetime.off_peak_energy_start','hour') < 10 %}
-          {{ "0" + (state_attr('input_datetime.off_peak_energy_start','hour')|string) + ":" + (state_attr('input_datetime.off_peak_energy_start','minute')|string) + ":00" }}
-        {%else%}
-          {{ (state_attr('input_datetime.off_peak_energy_start','hour')|string) + ":" + (state_attr('input_datetime.off_peak_energy_start','minute')|string) + ":00" }}
-        {%endif%}
+        {%- set hour = state_attr('input_datetime.off_peak_energy_start','hour') -%}
+        {%- set minute = state_attr('input_datetime.off_peak_energy_start','minute') -%}
+        {{ '{:02}:{:02}:00'.format(hour, minute) }} 
   - service: select.select_option
     target:
       entity_id: select.givtcp_zzzzzz_charge_end_time_slot_1
     data:
       option: >-
-        {%if state_attr('input_datetime.off_peak_energy_end','hour') < 10 %}
-          {{ "0" + (state_attr('input_datetime.off_peak_energy_end','hour')|string) + ":" + ((state_attr('input_datetime.off_peak_energy_end','minute')-2)|string) + ":00" }}
-        {%else%}
-          {{ (state_attr('input_datetime.off_peak_energy_end','hour')|string) + ":" + ((state_attr('input_datetime.off_peak_energy_end','minute')-2)|string) + ":00" }}
-       {%endif%}
+        {%- set hour = state_attr('input_datetime.off_peak_energy_end','hour') -%}
+        {%- set minute = state_attr('input_datetime.off_peak_energy_end','minute') - 2 -%}
+        {{ '{:02}:{:02}:00'.format(hour, minute) }} 
 ```
 I have incorporated these services into an updated version of @OliverShingler 's automation described in the August 2022 update of https://www.speaktothegeek.co.uk/2022/06/givenergy-giv-ac-3-0-battery-home-assistant-and-solar-forecast-automation/. I have updated it to work with Solcast. My strategy is to charge my batteries to 80% less the Solcast forecast for generation in the morning.  Since solar generation starts pretty much at the end of the E7 slot, even on a high winter PV generation forecast there is no risk that I will have to inport form the Grid at peak rate.
 
