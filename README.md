@@ -103,6 +103,138 @@ The new input_datetime values can be used to trigger automations and specificall
         {%- set minute = state_attr('input_datetime.off_peak_energy_end','minute') - 2 -%}
         {{ '{:02}:{:02}:00'.format(hour, minute) }} 
 ```
-I have incorporated these services into an updated version of @OliverShingler 's automation described in the August 2022 update of https://www.speaktothegeek.co.uk/2022/06/givenergy-giv-ac-3-0-battery-home-assistant-and-solar-forecast-automation/. I have updated it to work with Solcast. My strategy is to charge my batteries to 80% less the Solcast forecast for generation in the morning.  Since solar generation starts pretty much at the end of the E7 slot, even on a high winter PV generation forecast there is no risk that I will have to inport form the Grid at peak rate.
+I have incorporated these services into an updated version of @OliverShingler 's automation described in the August 2022 update of https://www.speaktothegeek.co.uk/2022/06/givenergy-giv-ac-3-0-battery-home-assistant-and-solar-forecast-automation/. I have updated it to work with Solcast. My strategy is to charge my batteries to 80% less the Solcast forecast for generation in the morning.  Since solar generation starts pretty much at the end of the E7 slot, even on a high winter PV generation forecast there is no risk that I will have to import form the Grid at peak rate.
+I run one automation to periodically update the Solcast Solar Forecast:
+```
+alias: 60b. Solcast Schedule
+description: ""
+trigger:
+  - platform: time
+    at: "02:45:00"
+  - platform: time
+    at: "05:45:00"
+  - platform: time
+    at: "08:45:00"
+  - platform: time
+    at: "11:45:00"
+  - platform: time
+    at: "14:45:00"
+  - platform: time
+    at: "17:45:00"
+  - platform: time
+    at: "20:45:00"
+  - platform: time
+    at: "23:45:00"
+condition: []
+action:
+  - service: solcast_solar.update_forecasts
+    data: {}
+mode: single
+```
+And the main one which sets tells the GivEnergy when to stop and start charging and what the Trget SOC is:
+```
+alias: "61d. Battery: Set charge limit from solar forecast v6"
+description: >-
+  version a. from Oliver Shingler with 19kWh battery version b. updated to use
+  Solcast version c. 08.10.23 updated to set Target SOC = Full Value (80%) less
+  Solar Forecast to peak (sum of hours to noon times 5.26 i.e. 100%/19) version
+  d. 12.10.23 sets GivTCP charge slot 1 from E7 values
+trigger:
+  - platform: time
+    at: "23:45:00"
+condition: []
+action:
+  - service: select.select_option
+    target:
+      entity_id: select.givtcp_zzzzzz_charge_start_time_slot_1
+    data:
+      option: >-
+        {%- set hour =
+        state_attr('input_datetime.off_peak_energy_start','hour')|int -%} {%-
+        set minute =
+        state_attr('input_datetime.off_peak_energy_start','minute')|int -%} {{ 
+        '{:02}:{:02}:00'.format(hour, minute) }} 
+  - service: select.select_option
+    target:
+      entity_id: select.givtcp_zzzzzz_charge_end_time_slot_1
+    data:
+      option: >-
+        {%- set hour =
+        state_attr('input_datetime.off_peak_energy_end','hour')|int -%} {%- set
+        minute = state_attr('input_datetime.off_peak_energy_end','minute')|int -
+        2 -%} {{ '{:02}:{:02}:00'.format(hour, minute) }} 
+  - delay:
+      hours: 0
+      minutes: 1
+      seconds: 0
+      milliseconds: 0
+  - variables:
+      target_soc: >-
+        {% set solar_forecast_to_12 =  (
+        "%.3f"|format(state_attr('sensor.solcast_pv_forecast_forecast_tomorrow','detailedHourly')[6]['pv_estimate'])|float
+        ) + (
+        "%.3f"|format(state_attr('sensor.solcast_pv_forecast_forecast_tomorrow','detailedHourly')[7]['pv_estimate'])|float
+        ) + (
+        "%.3f"|format(state_attr('sensor.solcast_pv_forecast_forecast_tomorrow','detailedHourly')[8]['pv_estimate'])|float
+        ) + (
+        "%.3f"|format(state_attr('sensor.solcast_pv_forecast_forecast_tomorrow','detailedHourly')[9]['pv_estimate'])|float
+        ) + (
+        "%.3f"|format(state_attr('sensor.solcast_pv_forecast_forecast_tomorrow','detailedHourly')[10]['pv_estimate'])|float
+        ) + (
+        "%.3f"|format(state_attr('sensor.solcast_pv_forecast_forecast_tomorrow','detailedHourly')[11]['pv_estimate'])|float
+        )  %} {{ 80 - (solar_forecast_to_12 * 5.26)|round(0)}}
+  - service: number.set_value
+    data:
+      value: "{{ target_soc | float }} "
+    target:
+      entity_id: "{{ entity_inverter_target_soc }}"
+  - delay:
+      hours: 0
+      minutes: 1
+      seconds: 0
+      milliseconds: 0
+  - if:
+      - condition: template
+        value_template: "{{ states(entity_inverter_target_soc)|float != target_soc|float }}"
+    then:
+      - service: notify.persistent_notification
+        data:
+          message: "Battery: Failed to set SOC... trying again."
+      - service: number.set_value
+        data:
+          value: "{{ target_soc | float }} "
+        target:
+          entity_id: "{{ entity_inverter_target_soc }}"
+      - delay:
+          hours: 0
+          minutes: 1
+          seconds: 0
+          milliseconds: 0
+  - service: input_text.set_value
+    data:
+      value: >-
+        ({{now().strftime("%Y-%m-%d %H:%M:%S")}}) Forecast: {{
+        states(entity_solar_forecast) }}kWh | Limit: {{ target_soc }}%
+    target:
+      entity_id: "{{ entity_helper_logging }}"
+  - wait_for_trigger:
+      - platform: time
+        at: input_datetime.off_peak_energy_end
+  - delay:
+      hours: 0
+      minutes: 1
+      seconds: 0
+      milliseconds: 0
+  - service: number.set_value
+    data:
+      value: 80
+    target:
+      entity_id: "{{ entity_inverter_target_soc }}"
+mode: restart
+variables:
+  entity_solar_forecast: sensor.solcast_pv_forecast_forecast_tomorrow
+  entity_inverter_target_soc: number.givtcp_zzzzzz_target_soc
+  entity_helper_logging: input_text.battery_charge_limit_log
+```
 
 I hope this is interesting and/or helpful.
