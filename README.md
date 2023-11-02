@@ -170,19 +170,8 @@ action:
       milliseconds: 0
   - variables:
       target_soc: >-
-        {% set solar_forecast_to_12 =  (
-        "%.3f"|format(state_attr('sensor.solcast_pv_forecast_forecast_tomorrow','detailedHourly')[6]['pv_estimate'])|float
-        ) + (
-        "%.3f"|format(state_attr('sensor.solcast_pv_forecast_forecast_tomorrow','detailedHourly')[7]['pv_estimate'])|float
-        ) + (
-        "%.3f"|format(state_attr('sensor.solcast_pv_forecast_forecast_tomorrow','detailedHourly')[8]['pv_estimate'])|float
-        ) + (
-        "%.3f"|format(state_attr('sensor.solcast_pv_forecast_forecast_tomorrow','detailedHourly')[9]['pv_estimate'])|float
-        ) + (
-        "%.3f"|format(state_attr('sensor.solcast_pv_forecast_forecast_tomorrow','detailedHourly')[10]['pv_estimate'])|float
-        ) + (
-        "%.3f"|format(state_attr('sensor.solcast_pv_forecast_forecast_tomorrow','detailedHourly')[11]['pv_estimate'])|float
-        )  %} {{ 80 - (solar_forecast_to_12 * 5.26)|round(0)}}
+        {% set solar_forecast_to_12 =  (state_attr('sensor.solcast_pv_forecast_forecast_tomorrow', 'detailedHourly')[:12]| map(attribute='pv_estimate') | sum | round(3))  %}
+        {{ 80 - (solar_forecast_to_12 * 5.26)|round(0)}}
   - service: number.set_value
     data:
       value: "{{ target_soc | float }} "
