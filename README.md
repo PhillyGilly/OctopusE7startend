@@ -69,7 +69,7 @@ action:
         sequence:
           - service: input_datetime.set_datetime
             data:
-              timestamp: "{{ now().timestamp() }}"
+              timestamp: "{{ now().timestamp()|int }}"
             target:
               entity_id: input_datetime.off_peak_energy_start
       - conditions:
@@ -79,7 +79,7 @@ action:
         sequence:
           - service: input_datetime.set_datetime
             data:
-              timestamp: "{{ now().timestamp() }}"
+              timestamp: "{{ now().timestamp()|int - 120 }}"
             target:
               entity_id: input_datetime.off_peak_energy_end
 mode: single
