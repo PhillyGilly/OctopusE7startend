@@ -32,7 +32,7 @@ When the Octopus Energy Integration is installed, it creates a new electricity m
 The times that Off-peak starts and ends are shown in the event log. Note that these values during British Summer Time are not the same as the IHD values.
 You can decide which ones to believe, however, as Economy 7 has to work with non-smart meters too, I am inclined to think that the Off-peak is 00:30 to 07:30 GMT which is what Octopus subsequently confirmed to me in an email.
 
-After this the automation to keep the InputDate Helpers aligned to the Octopus API values is fairly straight forward:
+After this the automation to keep the InputDate Helpers aligned to the Octopus API values is fairly straight forward, although you have to catch both the spring "eight hour" day and autumn "six hour" day from the trailing and leading edge respectively:
 ```
 alias: Set Offpeak & Peak Tariffs and Times
 description: ""
@@ -69,9 +69,15 @@ action:
         sequence:
           - service: input_datetime.set_datetime
             data:
-              timestamp: "{{ now().timestamp()|int }}"
+              timestamp: "{{ now().timestamp()|int + 60 }}"
             target:
               entity_id: input_datetime.off_peak_energy_start
+          - service: input_datetime.set_datetime
+            data:
+              timestamp: "{{ now().timestamp()|int - 60 + 7*60*60 }}"
+            target:
+              entity_id: input_datetime.off_peak_energy_end
+              
       - conditions:
           - condition: trigger
             id:
@@ -79,7 +85,12 @@ action:
         sequence:
           - service: input_datetime.set_datetime
             data:
-              timestamp: "{{ now().timestamp()|int - 120 }}"
+              timestamp: "{{ now().timestamp()|int + 60  - 7*60*60 }}"
+            target:
+              entity_id: input_datetime.off_peak_energy_start
+          - service: input_datetime.set_datetime
+            data:
+              timestamp: "{{ now().timestamp()|int - 60 }}"
             target:
               entity_id: input_datetime.off_peak_energy_end
 mode: single
